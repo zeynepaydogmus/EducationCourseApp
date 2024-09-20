@@ -1,0 +1,9 @@
+
+.idea/
+*.sln
+*.user
+
+bin/
+obj/
+
+*.tmp
