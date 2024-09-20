@@ -1,3 +1,8 @@
+using EducationCourseApp.Catalog.Mapping;
+using EducationCourseApp.Catalog.Services;
+using EducationCourseApp.Catalog.Settings;
+using Microsoft.Extensions.Options;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,7 +11,14 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddAutoMapper(typeof(GeneralMapping));
+builder.Services.Configure<DatabaseSettings>(builder.Configuration.GetSection("DatabaseSettings"));
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICourseService,CourseService>();
+builder.Services.AddSingleton<IDatabaseSettings>(x =>
+{
+    return x.GetRequiredService<IOptions<DatabaseSettings>>().Value;
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
