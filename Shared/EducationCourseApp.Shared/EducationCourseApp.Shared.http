@@ -1,0 +1,6 @@
+@EducationCourseApp.Shared_HostAddress = http://localhost:5278
+
+GET {{EducationCourseApp.Shared_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,4 +1,4 @@
-namespace EducationCourseApp;
+namespace EducationCourseApp.Catalog;
 
 public class WeatherForecast
 {
