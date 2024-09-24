@@ -4,7 +4,6 @@ namespace EducationCourseApp.Basket.Services;
 
 public class RedisService
 {
-    
     private readonly string _host;
     private readonly int _port;
     private ConnectionMultiplexer _ConnectionMultiplexer;

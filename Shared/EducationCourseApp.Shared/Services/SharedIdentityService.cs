@@ -1,4 +1,6 @@
-﻿namespace EducationCourseApp.Shared.Services;
+﻿using System.Security.Claims;
+
+namespace EducationCourseApp.Shared.Services;
 
 public class SharedIdentityService : ISharedIdentityService
 {
@@ -9,5 +11,6 @@ public class SharedIdentityService : ISharedIdentityService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public string GetUserId => _httpContextAccessor.HttpContext.User.FindFirst("sub").Value;
+    //public string GetUserId => _httpContextAccessor.HttpContext.User.FindFirst("sub").Value;
+    public string GetUserId => _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 }
