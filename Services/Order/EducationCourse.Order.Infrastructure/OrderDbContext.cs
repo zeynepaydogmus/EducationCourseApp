@@ -18,7 +18,7 @@ public class OrderDbContext: DbContext
     {
         //configuration 
         modelBuilder.Entity<EducationCourseApp.Order.Domain.OrderAggregate.Order>().ToTable("Orders", DEFAULT_SCHEMA);
-        modelBuilder.Entity<OrderItem>().ToTable("Orders", DEFAULT_SCHEMA);
+        modelBuilder.Entity<OrderItem>().ToTable("OrderItems", DEFAULT_SCHEMA);
         modelBuilder.Entity<OrderItem>().Property(x => x.Price).HasColumnType("decimal(18,2)");
         modelBuilder.Entity<EducationCourseApp.Order.Domain.OrderAggregate.Order>().OwnsOne(o => o.Address).WithOwner();
         base.OnModelCreating(modelBuilder);

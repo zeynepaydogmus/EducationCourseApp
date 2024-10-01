@@ -12,6 +12,10 @@ public class OrderItem : Entity
         Price = price;
     }
 
+    public OrderItem()
+    {
+        
+    }
     public void UpdateOrderItem(string productId, string productName, string imageUrl, decimal price)
     {
         ProductId = productId;
