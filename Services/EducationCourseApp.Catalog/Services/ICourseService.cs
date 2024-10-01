@@ -11,5 +11,6 @@ public interface ICourseService
     Task<Response<CourseDto>> CreateAsync(CourseCreateDto courseCreateDto);
     Task<Response<NoContent>> UpdateAsync(CourseUpdateDto courseUpdateDto);
     Task<Response<NoContent>> DeleteAsync(string id);
-    Task<Response<List<CourseDto>>> GetAllByUserId(string userId);
+    Task<Response<List<CourseDto>>> GetAllByUserIdAsync(string userId);
+
 }

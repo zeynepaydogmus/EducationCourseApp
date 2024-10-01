@@ -54,17 +54,16 @@ public class CourseService : ICourseService
 
         return Response<CourseDto>.Success(_mapper.Map<CourseDto>(course), 200);
     }
-
-    public async Task<Response<List<CourseDto>>> GetAllByUserId(string userId)
+    
+    public async Task<Response<List<CourseDto>>> GetAllByUserIdAsync(string userId)
     {
-        var courses = await _courseCollection.Find(x => x.UserId == userId).ToListAsync();
+        var courses = await _courseCollection.Find<Course>(x => x.UserId == userId).ToListAsync();
 
         if (courses.Any())
         {
             foreach (var course in courses)
             {
-                course.Category =
-                    await _categoryCollection.Find<Category>(x => x.Id == course.CategoryId).FirstAsync();
+                course.Category = await _categoryCollection.Find<Category>(x => x.Id == course.CategoryId).FirstAsync();
             }
         }
         else
@@ -74,7 +73,6 @@ public class CourseService : ICourseService
 
         return Response<List<CourseDto>>.Success(_mapper.Map<List<CourseDto>>(courses), 200);
     }
-
     public async Task<Response<CourseDto>> CreateAsync(CourseCreateDto courseCreateDto)
     {
         var newCourse = _mapper.Map<Course>(courseCreateDto);
