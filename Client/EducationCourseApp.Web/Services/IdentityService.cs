@@ -12,15 +12,15 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace EducationCourseApp.Web.Services;
 
-public class IdentityService: IIdentityService
+public class IdentityService : IIdentityService
 {
     private readonly HttpClient _client;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ClientSettings _clientSettings;
     private readonly ServiceApiSettings _serviceApiSettings;
 
-    public IdentityService(HttpClient client, IHttpContextAccessor httpContextAccessor, 
-        IOptions<ClientSettings> clientSettings, 
+    public IdentityService(HttpClient client, IHttpContextAccessor httpContextAccessor,
+        IOptions<ClientSettings> clientSettings,
         IOptions<ServiceApiSettings> serviceApiSettings)
     {
         _httpContextAccessor = httpContextAccessor;
@@ -31,12 +31,12 @@ public class IdentityService: IIdentityService
 
     public async Task<Response<bool>> SignIn(SignInInput signInInput)
     {
-        var discovery = await _client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest()
+        var discovery = await _client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
         {
-            Address = _serviceApiSettings.BaseUri,
+            Address = _serviceApiSettings.IdentityBaseUrl,
             Policy = new DiscoveryPolicy { RequireHttps = false }
         });
-        
+
         if (discovery.IsError)
         {
             throw discovery.Exception;
@@ -55,15 +55,15 @@ public class IdentityService: IIdentityService
         if (token.IsError)
         {
             var responseContent = await token.HttpResponse.Content.ReadAsStringAsync();
-            var errorDto = JsonSerializer.Deserialize<ErrorDto>(responseContent, 
-                new JsonSerializerOptions{PropertyNameCaseInsensitive = true});
+            var errorDto = JsonSerializer.Deserialize<ErrorDto>(responseContent,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             return Response<bool>.Fail(errorDto.Errors, 404);
         }
 
         var userInfoRequest = new UserInfoRequest()
         {
-           Token = token.AccessToken,
-           Address = discovery.UserInfoEndpoint
+            Token = token.AccessToken,
+            Address = discovery.UserInfoEndpoint
         };
 
         var userInfo = await _client.GetUserInfoAsync(userInfoRequest);
@@ -71,8 +71,10 @@ public class IdentityService: IIdentityService
         {
             throw userInfo.Exception;
         }
+
         //cookie oluşurken hangi kimlikten oluşacak;
-        ClaimsIdentity claimsIdentity = new ClaimsIdentity(userInfo.Claims, CookieAuthenticationDefaults.AuthenticationScheme, "name", "role");
+        ClaimsIdentity claimsIdentity = new ClaimsIdentity(userInfo.Claims,
+            CookieAuthenticationDefaults.AuthenticationScheme, "name", "role");
         ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
         //access,refresh token tutalım
         var authenticationProperties = new AuthenticationProperties();
@@ -83,33 +85,108 @@ public class IdentityService: IIdentityService
                 Name = OpenIdConnectParameterNames.AccessToken,
                 Value = token.AccessToken
             },
-            
+
             new AuthenticationToken()
             {
                 Name = OpenIdConnectParameterNames.RefreshToken,
                 Value = token.RefreshToken
             },
-            
+
             new AuthenticationToken()
             {
                 Name = OpenIdConnectParameterNames.ExpiresIn,
-                Value = DateTime.Now.AddSeconds(token.ExpiresIn).ToString("o",CultureInfo.InvariantCulture)
+                Value = DateTime.Now.AddSeconds(token.ExpiresIn).ToString("o", CultureInfo.InvariantCulture)
             }
         });
 
         authenticationProperties.IsPersistent = signInInput.IsRemember;
-        await _httpContextAccessor.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal,
+        await _httpContextAccessor.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+            claimsPrincipal,
             authenticationProperties);
         return Response<bool>.Success(200);
     }
 
-    public Task<TokenResponse> GetAccessTokenByRefreshToken()
+    public async Task<TokenResponse> GetAccessTokenByRefreshToken()
     {
-        throw new NotImplementedException();
+        var discovery = await _client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = _serviceApiSettings.IdentityBaseUrl,
+            Policy = new DiscoveryPolicy { RequireHttps = false }
+        });
+
+        if (discovery.IsError)
+        {
+            throw discovery.Exception;
+        }
+
+        var refreshToken =
+            await _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.RefreshToken);
+        RefreshTokenRequest refreshTokenRequest = new RefreshTokenRequest
+        {
+            ClientId = _clientSettings.WebClientForUser.ClientId,
+            ClientSecret = _clientSettings.WebClientForUser.ClientSecret,
+            RefreshToken = refreshToken,
+            Address = discovery.TokenEndpoint
+        };
+
+        var token = await _client.RequestRefreshTokenAsync(refreshTokenRequest);
+        if (token.IsError)
+        {
+            return null;
+        }
+
+        var authenticationTokens = new List<AuthenticationToken>()
+        {
+            new AuthenticationToken()
+            {
+                Name = OpenIdConnectParameterNames.AccessToken,
+                Value = token.AccessToken
+            },
+            new AuthenticationToken()
+            {
+                Name = OpenIdConnectParameterNames.RefreshToken,
+                Value = token.RefreshToken
+            },
+            new AuthenticationToken()
+            {
+                Name = OpenIdConnectParameterNames.ExpiresIn,
+                Value = DateTime.Now.AddSeconds(token.ExpiresIn).ToString("o", CultureInfo.InvariantCulture)
+            }
+        };
+
+        var authenticationResult = await _httpContextAccessor.HttpContext.AuthenticateAsync();
+        var properties = authenticationResult.Properties;
+        properties.StoreTokens(authenticationTokens);
+        await _httpContextAccessor.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+            authenticationResult.Principal, properties);
+        return token;
     }
 
-    public Task RevokeRefreshToken()
+    public async Task RevokeRefreshToken()
     {
-        throw new NotImplementedException();
+        var discovery = await _client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+        {
+            Address = _serviceApiSettings.IdentityBaseUrl,
+            Policy = new DiscoveryPolicy { RequireHttps = false }
+        });
+
+        if (discovery.IsError)
+        {
+            throw discovery.Exception;
+        }
+
+        var refreshToken =
+            await _httpContextAccessor.HttpContext.GetTokenAsync(OpenIdConnectParameterNames.RefreshToken);
+
+        TokenRevocationRequest tokenRevocationRequest = new TokenRevocationRequest
+        {
+            ClientId = _clientSettings.WebClientForUser.ClientId,
+            ClientSecret = _clientSettings.WebClientForUser.ClientSecret,
+            Address = discovery.RevocationEndpoint,
+            Token = refreshToken,
+            TokenTypeHint = "refresh_token"
+        };
+
+        await _client.RevokeTokenAsync(tokenRevocationRequest);
     }
 }

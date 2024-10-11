@@ -20,6 +20,7 @@ public class AuthController : Controller
         return View();
     }
 
+
     [HttpPost]
     public async Task<IActionResult> SignIn(SignInInput signInInput)
     {
@@ -35,9 +36,17 @@ public class AuthController : Controller
             {
                 ModelState.AddModelError(string.Empty, x);
             });
+            return View(signInInput); 
         }
-        
+
         return RedirectToAction(nameof(Index), "Home");
-        
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        await _identityService.RevokeRefreshToken();
+        return RedirectToAction(nameof(HomeController.Index), "Home");
     }
 }
