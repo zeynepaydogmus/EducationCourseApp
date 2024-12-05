@@ -1,0 +1,6 @@
+@EducationCourseApp.Order.API_HostAddress = http://localhost:5239
+
+GET {{EducationCourseApp.Order.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
