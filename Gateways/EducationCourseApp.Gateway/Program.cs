@@ -13,12 +13,13 @@ builder.Configuration
     .AddEnvironmentVariables();
 var requireAuthorizePolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("sub");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(opt =>
-{
-    opt.Authority = builder.Configuration["IdentityServerURL"];
-    opt.Audience = "resource_gateway";
-    opt.RequireHttpsMetadata = false;
-});
+builder.Services.AddAuthentication("GatewayAuthenticationScheme")
+    .AddJwtBearer("GatewayAuthenticationScheme", opt =>
+    {
+        opt.Authority = builder.Configuration["IdentityServerURL"];
+        opt.Audience = "resource_gateway";
+        opt.RequireHttpsMetadata = false;
+    });
 builder.Services.AddOcelot();
 var app = builder.Build();
 await app.UseOcelot();

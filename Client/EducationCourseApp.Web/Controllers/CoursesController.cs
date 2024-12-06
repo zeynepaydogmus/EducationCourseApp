@@ -1,4 +1,5 @@
 ﻿using EducationCourseApp.Shared.Services;
+using EducationCourseApp.Web.Models.Catalog;
 using EducationCourseApp.Web.Services.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,8 @@ public class CoursesController : Controller
 
     public async Task<IActionResult> Index()
     {
-        return View(await _catalogService.GetAllCourseByUserIdAsync(_identityService.GetUserId));
+        var courses = await _catalogService.GetAllCourseByUserIdAsync(_identityService.GetUserId);
+        
+        return View(courses ?? new List<CourseViewModel>());
     }
 }

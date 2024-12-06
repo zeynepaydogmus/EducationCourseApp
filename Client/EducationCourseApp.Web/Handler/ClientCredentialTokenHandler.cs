@@ -6,11 +6,11 @@ using EducationCourseApp.Web.Services.Interface;
 
 namespace EducationCourseApp.Web.Handler;
 
-public class ClientCredentialTokenHandlerİ:DelegatingHandler
+public class ClientCredentialTokenHandler:DelegatingHandler
 {
     private readonly IClientCredentialTokenService _clientCredential;
 
-    public ClientCredentialTokenHandlerİ(IClientCredentialTokenService clientCredential)
+    public ClientCredentialTokenHandler(IClientCredentialTokenService clientCredential)
     {
         _clientCredential = clientCredential;
     }
@@ -18,7 +18,7 @@ public class ClientCredentialTokenHandlerİ:DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bareer",await _clientCredential.GetToken());
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",await _clientCredential.GetToken());
         var response = await base.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
